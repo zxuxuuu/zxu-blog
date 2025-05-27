@@ -2,8 +2,8 @@
 const siteMetadata = {
   title: 'Blog',
   author: 'Zxu',
-  headerTitle: 'Zxu-Blog',
-  description: 'A blog created with Next.js and Tailwind.css',
+  headerTitle: 'Zxu的随笔小站',
+  description: '记录技术，生活琐记，偶尔来点旅途风景。',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://www.zxuxuuu.cn',
@@ -22,7 +22,7 @@ const siteMetadata = {
   // instagram: 'https://www.instagram.com',
   // medium: 'https://medium.com',
   // bluesky: 'https://bsky.app/',s
-  locale: 'en-US',
+  locale: 'zh-CN',
   // set to true if you want a navbar fixed to the top
   stickyNav: false,
   analytics: {
@@ -81,7 +81,7 @@ const siteMetadata = {
       // example: https://giscus.app/themes/custom_example.css
       themeURL: '',
       // This corresponds to the `data-lang="en"` in giscus's configurations
-      lang: 'en',
+      lang: 'cn',
     },
   },
   search: {

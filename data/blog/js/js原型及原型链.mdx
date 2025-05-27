@@ -1,0 +1,79 @@
+---
+title: js原型及原型链
+date: '2019-9-18'
+tags: ['js']
+draft: false
+summary: '分析javascript中对象的原型及原型链'
+---
+
+### 1.原型的概念
+
+- 每一个构造函数都有一个prototype的属性，它指向一个对象。这个对象的所有属性和方法都会被这个构造函数的实例化对象所继承。
+
+```javascript
+function Foo(name) {
+  this.name = name
+}
+Foo.prototype.age = 14
+Foo.prototype.sayHello = () => {
+  console.log('hello')
+}
+var foo = new Foo()
+console.log(foo.age) //14
+console.log(foo.sayHello) //'hello'
+```
+
+- 上面的例子也说明了原型存在的意义。在构造函数没有prototype属性的时候。构造函数中的属性和方法无法被实例化的对象共享。换个角度，在构造函数一些私有属性和方法不想被继承直接写在构造函数内部即可。
+
+### 2.原型链的概念
+
+- 每个对象都有一个指向它的原型(prototype)对象的内部链。每个原型对象又有自己的原型，直到某个对象(Object)的原型为null为止。（用代码还原下图）
+
+![构造函数和原型的关系图](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/9/17/16d3adc08e594d49~tplv-t2oaga2asx-image.image)  
+这里涉及到显式原型（prototype）和隐式原型（\_\_proto\_\_）的概念:
+
+- 显式原型：每一个构造函数（function）都有一个prototype属性，定义的时候自动添加，默认值是一个空对象。并且该对象有一个（constructor）属性指向构造函数（**如上图**）
+- 隐式原型：每一个实例化的对象都有一个（\_\_proto\_\_）的属性，创建对象时自动添加，默认值为构造函数的prototype属性值。
+- **注意：可以直接向显式原型添加属性或方法，不可以对隐式原型进行操作**  
+  下面我们用代码解释上图：
+
+```javascript
+function Foo(name) {
+  //构造函数
+  this.name = name
+}
+var foo = new Foo() //foo为实例化的对象
+//如图所示:构造函数的显式原型===构造函数实例的隐式原型
+console.log(Foo.prototype === foo.__proto__) //true
+//构造函数的显式原型的（constructor）属性指向构造函数自身
+console.log(Foo.prototype.constructor === Foo) //true
+//我们已经找到了原型，那么我们继续延着原型链向上寻找看看能发现什么
+console.log(foo.__proto__.__proto__ === Object.prototype) //true
+//在介绍原型链的顶端（尽头）的时候我们说过：直到某个对象(Object)的原型为null为止。好，我们继续打印。
+console.log(foo.__proto__.__proto__.__proto__) //null
+console.log(Object.prototype.__proto__) //null
+console.log(foo.__proto__.__proto__.__proto__ === Object.prototype.__proto__) //true
+//此时我们走到了原型链的顶端（null）
+```
+
+### 3.instanceof原理
+
+![instanceof原理剖析图](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/9/17/16d3b02a9c7718e5~tplv-t2oaga2asx-image.image)
+
+- 原理：判断实例对象的（\_\_proto\_\_）和构造函数的（prototype）是不是同一个引用，是返回（true），否则返回（false）
+
+```javascript
+console.log([] instanceof Array) //true
+```
+
+- 上面代码（instanceof）实际做的操作为
+
+```javascript
+console.log([].__proto__ === Array.prototype ? true : false) //true
+```
+
+### 4.**new**操作符做了什么
+
+1. 一个新对象被创建，它继承构造函数的原型
+2. 构造函数被执行，执行的时候，相应的参数会被传入，同时上下文this会被指定为这个实例。
+3. 如果构造函数返回一个对象，那么这个对象会取代整个new出来的结果。如果构造函数没有返回对象，那么new出来的为步骤1中创建的对象。
