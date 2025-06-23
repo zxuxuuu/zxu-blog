@@ -1,12 +1,21 @@
 import Image from './Image'
 import Link from './Link'
 
-const Card = ({ title, description, imgSrc, href }) => (
-  <div className="md max-w-[544px] p-4 md:w-1/2">
+const Card = ({ title, description, imgSrc, href, backgroundImage }) => (
+  <div
+    className="md max-w-[544px] p-4 md:w-1/2"
+    style={{
+      perspective: '1000px', // 添加透视效果
+    }}
+  >
     <div
+      style={{
+        background: backgroundImage,
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease', // 添加平滑过渡效果
+      }}
       className={`${
         imgSrc && 'h-full'
-      } overflow-hidden rounded-md border-2 border-gray-200/60 dark:border-gray-700/60`}
+      } overflow-hidden rounded-md border-2 border-gray-200/60 hover:scale-105 hover:transform hover:shadow-xl dark:border-gray-700/60`}
     >
       {imgSrc &&
         (href ? (
