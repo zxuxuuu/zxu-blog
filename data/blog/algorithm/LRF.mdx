@@ -1,0 +1,119 @@
+---
+title: LFU 缓存算法
+date: '2026-02-28'
+tags: ['tech', 'algorithm']
+draft: false
+summary: '一文读懂LFU算法'
+---
+
+### LFU 算法
+
+LFU（Least Frequently Used）算法是一种缓存替换算法，当缓存满了需要替换时，LFU算法会选择使用频率最低的项进行替换。如果有多个项的使用频率相同，则选择最久未使用的项进行替换。
+
+### 举个例子
+
+假设我们有一个容量为3的LFU缓存，按照以下顺序访问数据：
+
+1. 访问数据A，缓存状态：[A(1)]
+2. 访问数据B，缓存状态：[A(1), B(1)]
+3. 访问数据C，缓存状态：[A(1), B(1), C(1)]
+4. 访问数据A，缓存状态：[A(2), B(1), C(1)]（A的使用频率增加）
+5. 访问数据D，缓存状态：[A(2), B(1), D(1)]（D被添加到缓存中）
+6. 访问数据D，缓存状态：[A(2), D(2), B(1)]（D的使用频率增加，B被替换）
+
+### 实现方式
+
+LFU算法通常使用双向链表和哈希表来实现。双向链表用于维护缓存项的访问顺序，哈希表用于快速查找缓存项。
+
+#### 实现思路
+
+1. 使用一个哈希表 `keyToNode` 来存储键与节点的映射关系，节点包含键、值、使用频率等信息。
+2. 使用一个哈希表 `freqToNodes` 来存储使用频率与节点链表的映射关系，节点链表用于维护相同使用频率的项。
+3. 当访问一个项时，如果该项存在于缓存中，则将其使用频率增加，并将其移动到新的频率链表的头部，表示它是最近使用的项。
+4. 当添加一个新项时，如果缓存已满，则删除使用频率最低的项，如果存在多个使用频率最低的项，则删除最久未使用的项。
+5. 如果有多个项的使用频率相同，则选择最久未使用的项进行替换.
+
+以下是使用javascript实现完整LFU缓存算法的示例代码：
+
+```javascript
+class Node {
+  constructor(key = 0, value = 0) {
+    this.key = key
+    this.value = value
+    this.freq = 1
+    this.prev = null
+    this.next = null
+  }
+}
+
+class LFUCache {
+  constructor(capacity) {
+    this.capacity = capacity
+    this.minFreq = 0
+    this.keyToNode = new Map()
+    this.freqToNodes = new Map()
+  }
+
+  get(key) {
+    const node = this.keyToNode.get(key)
+    if (!node) return -1
+    this.#update(node)
+    return node.value
+  }
+
+  put(key, value) {
+    if (this.capacity === 0) return
+    let node = this.keyToNode.get(key)
+    if (node) {
+      node.value = value
+      this.#update(node)
+      return
+    }
+    if (this.keyToNode.size >= this.capacity) {
+      let delNodes = this.freqToNodes.get(this.minFreq)
+      let delNode = delNodes.prev
+      delNodes.prev = delNode.prev
+      delNode.prev.next = delNodes
+      this.keyToNode.delete(delNode.key)
+    }
+    let newNode = new Node(key, value)
+    this.keyToNode.set(key, newNode)
+    let nodes = this.freqToNodes.get(1) || new Node()
+    nodes.next = nodes.next || nodes
+    nodes.prev = nodes.prev || nodes
+    newNode.next = nodes.next
+    newNode.prev = nodes
+    nodes.next.prev = newNode
+    nodes.next = newNode
+    this.freqToNodes.set(1, nodes)
+    this.minFreq = 1
+  }
+
+  #update(node) {
+    let freq = node.freq
+    let nodes = this.freqToNodes.get(freq)
+    node.freq++
+    if (nodes.next === node && nodes.prev === node) {
+      this.freqToNodes.delete(freq)
+      if (this.minFreq === freq) this.minFreq++
+    } else {
+      node.prev.next = node.next
+      node.next.prev = node.prev
+      if (this.minFreq === freq && !nodes.next) this.minFreq++
+    }
+
+    let nextNodes = this.freqToNodes.get(node.freq) || new Node()
+    nextNodes.next = nextNodes.next || nextNodes
+    nextNodes.prev = nextNodes.prev || nextNodes
+    node.next = nextNodes.next
+    node.prev = nextNodes
+    nextNodes.next.prev = node
+    nextNodes.next = node
+    this.freqToNodes.set(node.freq, nextNodes)
+  }
+}
+```
+
+### 总结
+
+LFU算法通过维护每个缓存项的使用频率来决定替换策略，当缓存满了需要替换时，LFU算法会选择使用频率最低的项进行替换。如果有多个项的使用频率相同，则选择最久未使用的项进行替换。LFU算法适用于访问模式具有明显频率分布的场景，可以有效提高缓存命中率.

@@ -1,0 +1,139 @@
+---
+title: LRU 缓存算法
+date: '2026-02-28'
+tags: ['tech', 'algorithm']
+draft: false
+summary: '一文读懂LRU算法'
+---
+
+### LRU 算法
+
+LRU（Least Recently Used）算法是一种常用的缓存替换算法，主要用于管理有限的缓存空间。当缓存满了需要替换时，LRU算法会选择最近最少使用的项进行替换。
+
+### 举个例子
+
+假设我们有一个容量为3的LRU缓存，按照以下顺序访问数据：
+
+1. 访问数据A，缓存状态：[A]
+2. 访问数据B，缓存状态：[A, B]
+3. 访问数据C，缓存状态：[A, B, C]
+4. 访问数据A，缓存状态：[B, C, A]（A被重新访问，变为最近使用）
+5. 访问数据D，缓存状态：[C, A, D]（B被替换，因为它是最近最少使用的）
+
+### 实现方式
+
+LRU算法通常使用双向链表和哈希表来实现。双向链表用于维护缓存项的访问顺序，而哈希表用于快速定位缓存项。
+
+#### 实现思路
+
+1. 使用一个双向链表来维护缓存项的访问顺序，链表头部表示最近使用的项，链表尾部表示最少使用的项。
+2. 使用一个哈希表来存储键与链表节点的映射关系
+3. 当访问一个项时，如果该项存在于缓存中，则将其移动到链表头部，表示它是最近使用的项。
+4. 当添加一个新项时，如果缓存已满，则删除链表尾部的项，并将新项添加到链表头部。
+5. 当访问一个项时，如果该项不存在于缓存中，则返回-1。
+   以下是使用javascript实现完整LRU缓存算法的示例代码：
+
+```javascript
+class Node {
+  constructor(key = 0, value = 0) {
+    this.key = key
+    this.value = value
+    this.prev = null
+    this.next = null
+  }
+}
+
+class LRUCache {
+  constructor(capacity) {
+    this.capacity = capacity
+    this.bound = new Node()
+    this.bound.prev = this.bound
+    this.bound.next = this.bound
+    this.keyToNode = new Map()
+  }
+
+  get(key) {
+    const node = this.#getNode(key)
+    return node ? node.value : -1
+  }
+
+  put(key, value) {
+    let node = this.#getNode(key)
+    if (node) {
+      node.value = value
+      return
+    }
+    let newNode = new Node(key, value)
+    this.#pushFront(newNode)
+    this.keyToNode.set(key, newNode)
+    if (this.keyToNode.size > this.capacity) {
+      let delNode = this.bound.prev
+      this.#remove(delNode)
+      this.keyToNode.delete(delNode.key)
+    }
+  }
+
+  #getNode(key) {
+    if (!this.keyToNode.has(key)) {
+      return null
+    }
+    let node = this.keyToNode.get(key)
+    this.#remove(node)
+    this.#pushFront(node)
+    return node
+  }
+
+  #remove(x) {
+    x.prev.next = x.next
+    x.next.prev = x.prev
+  }
+
+  #pushFront(x) {
+    x.prev = this.bound
+    x.next = this.bound.next
+    x.prev.next = x
+    x.next.prev = x
+  }
+}
+```
+
+### 简单实现
+
+如果不考虑性能优化，我们也可以使用JavaScript的`Map`对象来实现LRU缓存。`Map`对象保持了插入顺序，因此我们可以通过删除和重新插入来更新访问顺序。以下是一个简单的实现：
+
+```javascript
+class LRUCache {
+  constructor(capacity) {
+    this.capacity = capacity
+    this.cache = new Map()
+  }
+
+  get(key) {
+    if (!this.cache.has(key)) {
+      return -1 // 缓存未命中
+    }
+    const value = this.cache.get(key)
+    // 将访问的项移到末尾，表示最近使用
+    this.cache.delete(key)
+    this.cache.set(key, value)
+    return value
+  }
+
+  put(key, value) {
+    if (this.cache.has(key)) {
+      // 更新现有项并移到末尾
+      this.cache.delete(key)
+    } else if (this.cache.size >= this.capacity) {
+      // 删除最旧的项（第一个项）
+      const oldestKey = this.cache.keys().next().value
+      this.cache.delete(oldestKey)
+    }
+    // 添加新项
+    this.cache.set(key, value)
+  }
+}
+```
+
+### 总结
+
+LRU算法通过维护一个有序的数据结构来跟踪缓存项的使用情况，确保在需要替换时能够快速找到最近最少使用的项。它在实际应用中非常常见，尤其是在操作系统、数据库和Web缓存等领域。理解LRU算法对于优化性能和资源管理非常重要。

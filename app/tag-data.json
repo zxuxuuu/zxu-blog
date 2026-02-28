@@ -1,6 +1,7 @@
 {
-  "tech": 2,
+  "tech": 3,
+  "algorithm": 2,
+  "js": 1,
   "holiday": 1,
-  "journey": 1,
-  "js": 1
+  "journey": 1
 }
